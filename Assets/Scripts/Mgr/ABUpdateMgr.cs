@@ -59,7 +59,7 @@ namespace JiangJian
 		/// </summary>
 		/// <param name="overCallBack"></param>
 		/// <param name="updateInfo"></param>
-		public void CheckUpdate(Action<bool> overCallBack, Action<string> updateInfo)
+		public void CheckUpdate(Action<bool> overCallBack, Action<string> updateInfo,Action<float,float>procressCallBack)
 		{
 			dic_LocalAbinfo.Clear();
 			dic_RemoteAbinfo.Clear();
@@ -69,10 +69,12 @@ namespace JiangJian
 			{
 				if (isOver)
 				{
+					procressCallBack?.Invoke(1, 5);
 					updateInfo?.Invoke("下载资源对比文件完成。");
 
 					GetLocalAbCompareFileInfo((isOver) =>
 					{
+						procressCallBack?.Invoke(2, 5);
 						updateInfo?.Invoke("获取更新资源文件。");
 						//遍历获取所有要更新的资源
 						foreach (var item in dic_RemoteAbinfo.Keys)
@@ -105,12 +107,15 @@ namespace JiangJian
 							}
 						}
 
+						procressCallBack?.Invoke(3, 5);
 						updateInfo?.Invoke("保存最新的资源对比文件。");
 						UpdateABFile((isOver) =>
 						{
 							if (isOver)
 							{
+								procressCallBack?.Invoke(4, 5);
 								DownLoadFile("ABCompareInfo.txt", Application.persistentDataPath + "ABCompareInfo.txt");
+								procressCallBack?.Invoke(5, 5);
 							}
 							overCallBack?.Invoke(isOver);
 						}, updateInfo);

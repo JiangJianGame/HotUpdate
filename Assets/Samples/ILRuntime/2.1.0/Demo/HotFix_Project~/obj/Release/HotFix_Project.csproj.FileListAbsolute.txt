@@ -4,3 +4,5 @@ D:\UnityItems\HotUpdate\Assets\StreamingAssets\HotFix_Project.dll
 D:\UnityItems\HotUpdate\Assets\StreamingAssets\HotFix_Project.pdb
 D:\UnityItems\HotUpdate\Assets\Samples\ILRuntime\2.1.0\Demo\HotFix_Project~\obj\Release\HotFix_Project.dll
 D:\UnityItems\HotUpdate\Assets\Samples\ILRuntime\2.1.0\Demo\HotFix_Project~\obj\Release\HotFix_Project.pdb
+D:\UnityItems\HotUpdate\Assets\ArtRes\DLL\HotFix_Project.dll
+D:\UnityItems\HotUpdate\Assets\ArtRes\DLL\HotFix_Project.pdb

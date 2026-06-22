@@ -8,12 +8,12 @@ namespace JiangJian
     {
 		private void Start()
 		{
-			AssetBundleMgr.Instance().LoadResAsync<GameObject>("ui", "LoadingPanel", (panelObject) =>
+			AssetBundleMgr.Instance.LoadResAsync<GameObject>("ui", "LoadingPanel", (panelObject) =>
 			  {
 				  GameObject canvasObj = GameObject.Find("Canvas");
 				  panelObject.transform.SetParent(canvasObj.transform,false);
 
-				  AssetBundleMgr.Instance().ClearAB();
+				  AssetBundleMgr.Instance.ClearAB();
 
 				  var panel = panelObject.GetComponent<LoadingPanel>();
 				  panel.BeginUpdateFile();

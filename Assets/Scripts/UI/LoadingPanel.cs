@@ -43,11 +43,11 @@ namespace JiangJian
 			text_ProcessInfo.text = "资源加载结束。";
 
 			//IlRunTime初始化
-			IlRunTimeMgr.Instance().StartILRunTime(() =>
+			IlRunTimeMgr.Instance.StartILRunTime(() =>
 			{
 				text_ProcessInfo.text = "游戏初始化完毕。";
 
-				IlRunTimeMgr.Instance().appDomain.Invoke("HotFix_Project.ILRunTimeMain", "StartILRunTime", null, null);
+				IlRunTimeMgr.Instance.appDomain.Invoke("HotFix_Project.ILRunTimeMain", "StartILRunTime", null, null);
 			});
 		}
 	}

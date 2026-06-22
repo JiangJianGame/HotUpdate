@@ -43,9 +43,9 @@ namespace JiangJian
 			appDomain = new ILRuntime.Runtime.Enviorment.AppDomain(ILRuntimeJITFlags.JITOnDemand);
 
 			//加载对应的dll和pdb文件
-			ABMgr.GetInstance().LoadResAsync<TextAsset>("dll_res", "HotFix_Project.dll.txt", (dll) =>
+			AssetBundleMgr.Instance().LoadResAsync<TextAsset>("dll_res", "HotFix_Project.dll.txt", (dll) =>
 			  {
-				  ABMgr.GetInstance().LoadResAsync<TextAsset>("dll_res", "HotFix_Project.pdb.txt", (pdb) =>
+				  AssetBundleMgr.Instance().LoadResAsync<TextAsset>("dll_res", "HotFix_Project.pdb.txt", (pdb) =>
 				  {
 					  //初始化pdb和dll文件流对象
 					  dllStream = new MemoryStream(dll.bytes);

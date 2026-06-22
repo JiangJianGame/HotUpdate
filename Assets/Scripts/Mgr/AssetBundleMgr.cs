@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace JiangJian
 {
-    public class ABMgr : SingletonAutoMono<ABMgr>
+    public class AssetBundleMgr : SingletonAutoMono<AssetBundleMgr>
     {
         //主包
         private AssetBundle mainAB = null;

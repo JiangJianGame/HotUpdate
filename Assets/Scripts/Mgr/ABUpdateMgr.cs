@@ -25,7 +25,7 @@ namespace JiangJian
 		#endif
 		private string GetFullUrl => baseUrl + endUrl+platform;
 
-		//╣╔юЩдёй╫
+		//О©╫О©╫О©╫О©╫дёй╫
 		private static ABUpdateMgr instance;
 		public static ABUpdateMgr Instance
 		{
@@ -44,18 +44,18 @@ namespace JiangJian
 			instance = null;
 		}
 
-		//сцсз╢╒╢Фт╤╤кab╟Эпео╒вж╣Дё╛ж╝╨С╨м╠╬╣ь╫Ьпп╤т╠х╫Ь╤ЬмЙЁи╦Эпб║╒обть
+		//О©╫О©╫О©╫з╢О©╫О©╫О©╫т╤О©╫О©╫abО©╫О©╫О©╫О©╫о╒О©╫ж╣Дё╛ж╝О©╫О©╫м╠О©╫О©╫ь╫О©╫О©╫п╤т╠х╫О©╫О©╫О©╫О©╫О©╫и╦О©╫О©╫б║О©╫О©╫О©╫О©╫О©╫
 		private Dictionary<string, AbInfo> dic_RemoteAbinfo = new Dictionary<string, AbInfo>();
 
-		//сцсз╢╒╢Фт╤╤кab╟Эпео╒вж╣Дё╛ж╝╨С╨м╠╬╣ь╫Ьпп╤т╠х╫Ь╤ЬмЙЁи╦Эпб║╒обть
+		//О©╫О©╫О©╫з╢О©╫О©╫О©╫т╤О©╫О©╫abО©╫О©╫О©╫О©╫о╒О©╫ж╣Дё╛ж╝О©╫О©╫м╠О©╫О©╫ь╫О©╫О©╫п╤т╠х╫О©╫О©╫О©╫О©╫О©╫и╦О©╫О©╫б║О©╫О©╫О©╫О©╫О©╫
 		private Dictionary<string, AbInfo> dic_LocalAbinfo = new Dictionary<string, AbInfo>();
 
 
-		//╢Щобть╣дab╟Эап╠Мнд╪Чё╛╢Ф╢╒╣дйгab╟Э╣дцШвж
+		//О©╫О©╫О©╫О©╫О©╫ь╣О©╫abО©╫О©╫О©╫п╠О©╫О©╫д╪О©╫О©╫О©╫О©╫Ф╢╒О©╫О©╫О©╫О©╫abО©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
 		private List<string> downLoadList = new List<string>();
 
 		/// <summary>
-		/// хх╦ЭжВхК©з
+		/// О©╫х╦О©╫О©╫О©╫О©╫О©╫О©╫
 		/// </summary>
 		/// <param name="overCallBack"></param>
 		/// <param name="updateInfo"></param>
@@ -70,35 +70,35 @@ namespace JiangJian
 				if (isOver)
 				{
 					procressCallBack?.Invoke(1, 5);
-					updateInfo?.Invoke("обтьвйт╢╤т╠хнд╪ЧмЙЁи║ё");
+					updateInfo?.Invoke("О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫О©╫О©╫и║О©╫");
 
 					GetLocalAbCompareFileInfo((isOver) =>
 					{
 						procressCallBack?.Invoke(2, 5);
-						updateInfo?.Invoke("╩Ях║╦Эпбвйт╢нд╪Ч║ё");
-						//╠ИюЗ╩Ях║кЫспр╙╦Эпб╣двйт╢
+						updateInfo?.Invoke("О©╫О©╫х║О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫д╪О©╫О©╫О©╫");
+						//О©╫О©╫О©╫О©╫О©╫О©╫х║О©╫О©╫О©╫О©╫р╙О©╫О©╫О©╫б╣О©╫О©╫О©╫т╢
 						foreach (var item in dic_RemoteAbinfo.Keys)
 						{
 							if(dic_LocalAbinfo.ContainsKey(item))
 							{
-								//пХр╙╦Эпб╣дab╟Э
+								//О©╫О©╫р╙О©╫О©╫О©╫б╣О©╫abО©╫О©╫
 								if(dic_LocalAbinfo[item].abMd5!=dic_RemoteAbinfo[item].abMd5)
 								{
 									downLoadList.Add(item);
 								}
 
-								//рфЁЩ╣Тспсц╣дab╟Эё╛йёоб╣д╬мйгр╙ц╩сц╣дё╗пХр╙и╬ЁЩ╣дё╘
+								//О©╫фЁО©╫О©╫О©╫О©╫О©╫О©╫ц╣О©╫abО©╫О©╫О©╫О©╫йёО©╫б╣д╬О©╫О©╫О©╫р╙ц╩О©╫ц╣дёО©╫О©╫О©╫р╙и╬О©╫О©╫О©╫дёО©╫
 								dic_LocalAbinfo.Remove(item);
 							}
-							//пбтЖ╣дab╟Э
+							//О©╫О©╫О©╫О©╫О©╫О©╫abО©╫О©╫
 							else
 							{
 								downLoadList.Add(item);
 							}
 						}
 
-						updateInfo?.Invoke("и╬ЁЩц╩сц╣двйт╢нд╪Ч║ё");
-						//и╬ЁЩц╩сц╣д
+						updateInfo?.Invoke("и╬О©╫О©╫ц╩О©╫ц╣О©╫О©╫О©╫т╢О©╫д╪О©╫О©╫О©╫");
+						//и╬О©╫О©╫ц╩О©╫ц╣О©╫
 						foreach (var item in dic_LocalAbinfo)
 						{
 							if (File.Exists(Application.persistentDataPath + "/" + item))
@@ -108,7 +108,7 @@ namespace JiangJian
 						}
 
 						procressCallBack?.Invoke(3, 5);
-						updateInfo?.Invoke("╠ё╢ФвНпб╣двйт╢╤т╠хнд╪Ч║ё");
+						updateInfo?.Invoke("О©╫О©╫О©╫О©╫О©╫О©╫О©╫б╣О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫О©╫О©╫");
 						UpdateABFile((isOver) =>
 						{
 							if (isOver)
@@ -123,7 +123,7 @@ namespace JiangJian
 				}
 				else
 				{
-					updateInfo?.Invoke("обтьвйт╢╤т╠хнд╪Чй╖╟э║ё");
+					updateInfo?.Invoke("О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫й╖О©╫э║О©╫");
 					overCallBack?.Invoke(false);
 				}
 			});
@@ -131,11 +131,11 @@ namespace JiangJian
 
 
 		/// <summary>
-		/// ╦ЭпбAB╤т╠хнд╪Ч╣╫аый╠нд╪Чжп
+		/// О©╫О©╫О©╫О©╫ABО©╫т╠О©╫О©╫д╪О©╫О©╫О©╫О©╫О©╫й╠О©╫д╪О©╫О©╫О©╫
 		/// </summary>
 		public async void GetRemoteAbCompareFileInfo(Action<bool> overCallBack)
 		{
-			Debug.Log("©╙й╪╦ЭпбABнд╪Ч║ё");
+			Debug.Log("О©╫О©╫й╪О©╫О©╫О©╫О©╫ABО©╫д╪О©╫О©╫О©╫");
 
 			string fileName = "ABCompareInfo_TMP.txt";
 			string localPath = Application.persistentDataPath + "/" + fileName;
@@ -145,7 +145,7 @@ namespace JiangJian
 
 			while (!isOver && reDownloadMaxNum > 0)
 			{
-				//обтьт╤Ёлвйт╢╤т╠хнд╪Ч
+				//О©╫О©╫О©╫О©╫т╤О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫
 				await Task.Run(() => isOver = DownLoadFile(fileName, localPath));
 
 				reDownloadMaxNum--;
@@ -163,16 +163,16 @@ namespace JiangJian
 		public async void UpdateABFile(Action<bool> callBack, Action<string> downLoadProcress)
 		{
 
-			//обть╣╫╠╬╣ь╣дн╩жц
+			//О©╫О©╫О©╫ь╣О©╫О©╫О©╫О©╫ь╣О©╫н╩О©╫О©╫
 			string localPath = Application.persistentDataPath + "/";
-			//обтьмЙЁи╠Йж╬
+			//О©╫О©╫О©╫О©╫О©╫О©╫и╠О©╫ж╬
 			bool isOver = false;
-			//й╖╟эжьпбобть╢нйЩ
+			//й╖О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ь╢О©╫О©╫О©╫
 			int reDownloadMaxNum = 5;
-			//обтьЁи╧╕║╒кЫпХобть╟ЭйЩ
+			//О©╫О©╫О©╫ьЁи╧О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ь╟О©╫О©╫О©╫
 			int downLoadOverNum = 0;
 			int downLoadMaxNum = downLoadList.Count;
-			//обтьЁи╧╕╣дап╠М
+			//О©╫О©╫О©╫ьЁи╧О©╫О©╫О©╫О©╫п╠О©╫
 			List<string> tempList = new List<string>();
 			while (downLoadList.Count > 0 && reDownloadMaxNum > 0)
 			{
@@ -204,7 +204,7 @@ namespace JiangJian
 		}
 
 		/// <summary>
-		/// обтьнд╪Ч╡╒╠ё╢Ф╣╫╠╬╣ь
+		/// О©╫О©╫О©╫О©╫О©╫д╪О©╫О©╫О©╫О©╫О©╫О©╫Ф╣╫О©╫О©╫О©╫О©╫
 		/// </summary>
 		/// <param name="fileName"></param>
 		/// <param name="loaclPath"></param>
@@ -246,14 +246,14 @@ namespace JiangJian
 			}
 			catch (Exception e)
 			{
-				Debug.LogError($"обтьвйт╢╤т╠хнд╪Ч╠╗╢Мё╨{e}");
+				Debug.LogError($"О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫О©╫О©╫О©╫О©╫О©╫О©╫{e}");
 				return false;
 			}
 		}
 
 
 		/// <summary>
-		/// ╩Ях║╠╬╣ьвйт╢╤т╠хнд╪Ч
+		/// О©╫О©╫х║О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫
 		/// </summary>
 		private void GetLocalAbCompareFileInfo(Action<bool> overCallBack)
 		{
@@ -265,7 +265,7 @@ namespace JiangJian
 			else if (File.Exists(Application.streamingAssetsPath + "/ABCompareInfo.txt"))
 			{
 				filePath =
-				#if UNITY_ANDROID//тз╟╡в©ф╫л╗д╛хо╩Аспг╟в╨╣дё╛╡╩пХр╙╪сг╟в╨
+				#if UNITY_ANDROID//О©╫з╟О©╫в©ф╫л╗д╛О©╫о╩О©╫О©╫О©╫г╟в╨О©╫дёО©╫О©╫О©╫О©╫О©╫р╙О©╫О©╫г╟в╨
 					""
 				#else
 					"file:///"
@@ -284,7 +284,7 @@ namespace JiangJian
 		}
 
 		/// <summary>
-		/// ╩Ях║╠╬╣ьвйт╢╤т╠хнд╪Чпео╒п╞Ёл
+		/// О©╫О©╫х║О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫О©╫О©╫о╒п╞О©╫О©╫
 		/// </summary>
 		/// <param name="filePath"></param>
 		/// <returns></returns>
@@ -302,19 +302,19 @@ namespace JiangJian
 			}
 			else
 			{
-				Debug.Log($"╩Ях║╠╬╣ьвйт╢╤т╠хнд╪Чй╖╟э:{request.error}");
+				Debug.Log($"О©╫О©╫х║О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫О©╫д╪О©╫й╖О©╫О©╫:{request.error}");
 				overCallBack?.Invoke(false);
 			}
 		}
 
 		/// <summary>
-		/// ╫╚нд╠╬╫БнЖ╢╕юМ╨С╫╚пео╒лНЁД╣╫вж╣Джп
+		/// О©╫О©╫О©╫д╠О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫о╒О©╫О©╫Д╣╫О©╫ж╣О©╫О©╫О©╫
 		/// </summary>
 		/// <param name="textInfo"></param>
 		/// <param name="dic_ABInfo"></param>
 		private void HandleABCompareFileInfo(string textInfo, Dictionary<string, AbInfo> dic_ABInfo)
 		{
-			//╫Ьппвйт╢╤т╠х
+			//О©╫О©╫О©╫О©╫О©╫О©╫т╢О©╫т╠О©╫
 			string[] fileInfo = textInfo.Split('|');
 			string[] infos;
 			foreach (var item in fileInfo)
@@ -325,7 +325,7 @@ namespace JiangJian
 		}
 
 		/// <summary>
-		/// abпео╒
+		/// abО©╫О©╫о╒
 		/// </summary>
 		private class AbInfo
 		{

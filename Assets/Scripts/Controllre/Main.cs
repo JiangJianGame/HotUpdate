@@ -13,7 +13,7 @@ namespace JiangJian
 				  GameObject canvasObj = GameObject.Find("Canvas");
 				  panelObject.transform.SetParent(canvasObj.transform,false);
 
-				  AssetBundleMgr.Instance.ClearAB();
+				  AssetBundleMgr.Instance.ClearBundles();
 
 				  var panel = panelObject.GetComponent<LoadingPanel>();
 				  panel.BeginUpdateFile();

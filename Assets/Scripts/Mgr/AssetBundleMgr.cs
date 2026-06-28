@@ -3,210 +3,204 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Networking;
 
 namespace JiangJian
 {
     /// <summary>
     /// AssetBundle 加载管理器（单例）。
-    /// 负责加载主包、解析依赖、按需加载各业务 AB 包，并对外提供同步/异步加载接口。
-    /// 加载路径优先 <see cref="Application.persistentDataPath"/>（热更目录），
-    /// 不存在时回退到 <see cref="Application.streamingAssetsPath"/>（包体内置）。
+    /// 路径策略：优先热更目录(persistentDataPath)，缺失则回退包体内置(streamingAssetsPath)。
     /// </summary>
-    /// <remarks>
-    /// <para>使用流程：</para>
-    /// <list type="number">
-    ///   <item>通过 <c>AssetBundleMgr.Instance</c> 获取单例</item>
-    ///   <item>调用 <see cref="LoadRes{T}"/> 或 <see cref="LoadResAsync{T}"/> 加载资源</item>
-    ///   <item>切换场景或退出游戏时调用 <see cref="ClearBundles"/> 释放</item>
-    /// </list>
-    /// </remarks>
     public class AssetBundleMgr : SingletonAutoMono<AssetBundleMgr>
     {
         // ==================== 字段 ====================
 
-        // 主包（包含所有依赖关系的"主清单"包）
-        private AssetBundle _mainBundle;
-        // 主包内嵌的依赖清单
-        private AssetBundleManifest _manifest;
-        // 已加载的 AB 包缓存，避免重复加载（AB 包不能重复加载，会报错）
-        private readonly Dictionary<string, AssetBundle> _loadedBundles = new Dictionary<string, AssetBundle>();
+        private AssetBundle mainBundle;                                         // 主包，包含依赖清单
+        private AssetBundleManifest manifest;                                   // 主包内的依赖清单
+        private readonly Dictionary<string, AssetBundle> loadedBundles = new(); // 已加载的 AB 包缓存（不可重复加载）
+        private readonly Dictionary<string, int> bundleRefCounts = new();       // 引用计数，归零时卸载
 
-        // Unity 打包时约定的 manifest 资源固定名称
-        private const string MANIFEST_ASSET_NAME = "AssetBundleManifest";
+        private const string MANIFEST_ASSET_NAME = "AssetBundleManifest";       // manifest 固定资源名
 
-        // ==================== 路径与名称 ====================
+        // ==================== 路径 ====================
 
-        /// <summary>
-        /// 包体内置 AB 目录前缀
-        /// </summary>
-        private string StreamingPathPrefix => Application.streamingAssetsPath + "/";
+        private string StreamingPathPrefix => Application.streamingAssetsPath + "/";  // 包体内置
+        private string PersistentPathPrefix => Application.persistentDataPath + "/";  // 热更目录
+
+        // ==================== 核心加载逻辑 ====================
 
         /// <summary>
-        /// 热更 AB 目录前缀
+        /// 获取 AB 包路径。不传参时返回当前平台主包路径。
+        /// WebGL 无文件系统，始终走 streamingAssets；原生平台优先热更目录。
         /// </summary>
-        private string PersistentPathPrefix => Application.persistentDataPath + "/";
-
-        // ==================== 核心加载逻辑（内部） ====================
-
-        /// <summary>
-        /// 加载主包及其内嵌的 manifest。仅在第一次调用时真正加载。
-        /// </summary>
-        private void LoadMainBundle()
+        private string GetBundlePath(string bundleName = null)
         {
-            if (_mainBundle != null) return;
-
-            // 主包名按平台区分，匹配 BuildPipeline 打包时的输出目录
-            string mainBundleName =
+            if (bundleName == null)
+            {
+                bundleName =
 #if UNITY_IOS
-                "IOS";
+                    "IOS";
 #elif UNITY_ANDROID
-                "Android";
+                    "Android";
 #elif UNITY_WEBGL
-                "WebGL";
+                    "WebGL";
 #else
-                "PC";
+                    "PC";
 #endif
-
-            string path = GetBundlePath(mainBundleName);
-            _mainBundle = AssetBundle.LoadFromFile(path);
-            if (_mainBundle == null)
-            {
-                Debug.LogError($"[AssetBundleMgr] 主包加载失败：{path}");
-                return;
             }
 
-            _manifest = _mainBundle.LoadAsset<AssetBundleManifest>(MANIFEST_ASSET_NAME);
-            if (_manifest == null)
-            {
-                Debug.LogError($"[AssetBundleMgr] 主包内未找到 {MANIFEST_ASSET_NAME} 资源");
-            }
-        }
-
-        /// <summary>
-        /// 解析并加载指定 AB 包的全部依赖包。已加载的会自动跳过。
-        /// </summary>
-        private void LoadDependencies(string bundleName)
-        {
-            LoadMainBundle();
-            if (_manifest == null) return;
-
-            string[] dependencies = _manifest.GetAllDependencies(bundleName);
-            foreach (var dep in dependencies)
-            {
-                LoadBundleIfNotLoaded(dep);
-            }
-        }
-
-        /// <summary>
-        /// 若指定 AB 包尚未加载，则加载并加入缓存。
-        /// </summary>
-        private void LoadBundleIfNotLoaded(string bundleName)
-        {
-            if (_loadedBundles.ContainsKey(bundleName)) return;
-
-            string path = GetBundlePath(bundleName);
-            AssetBundle bundle = AssetBundle.LoadFromFile(path);
-            if (bundle == null)
-            {
-                Debug.LogError($"[AssetBundleMgr] AB 包加载失败：{path}");
-                return;
-            }
-            _loadedBundles.Add(bundleName, bundle);
-        }
-
-        /// <summary>
-        /// 获取 AB 包的可加载路径：优先热更目录，缺失则用包体内置。
-        /// </summary>
-        private string GetBundlePath(string bundleName)
-        {
+#if UNITY_WEBGL
+            return StreamingPathPrefix + bundleName;
+#else
             string persistentPath = PersistentPathPrefix + bundleName;
             return File.Exists(persistentPath) ? persistentPath : StreamingPathPrefix + bundleName;
+#endif
         }
 
-        /// <summary>
-        /// 资源若是预制体（GameObject）则自动实例化；否则原样返回。
-        /// </summary>
+        // ---------- 引用计数 ----------
+
+        /// <summary> 目标包及其依赖包引用计数各 +1 </summary>
+        private void AddRefCounts(string bundleName)
+        {
+            TryIncrementRefCount(bundleName);
+
+            if (manifest == null) return;
+            foreach (var dep in manifest.GetAllDependencies(bundleName))
+                TryIncrementRefCount(dep);
+        }
+
+        /// <summary> 单个包引用计数 +1 </summary>
+        private void TryIncrementRefCount(string bundleName)
+        {
+            if (!bundleRefCounts.ContainsKey(bundleName))
+                bundleRefCounts[bundleName] = 0;
+            bundleRefCounts[bundleName]++;
+        }
+
+        /// <summary> 目标包及其依赖包引用计数各 -1，归零时卸载并移出缓存 </summary>
+        private void DecRefCounts(string bundleName)
+        {
+            TryDecrementAndUnload(bundleName);
+
+            if (manifest == null) return;
+            foreach (var dep in manifest.GetAllDependencies(bundleName))
+                TryDecrementAndUnload(dep);
+        }
+
+        /// <summary> 单个包引用计数 -1，归零时卸载并移出缓存 </summary>
+        private void TryDecrementAndUnload(string bundleName)
+        {
+            if (!bundleRefCounts.ContainsKey(bundleName)) return;
+
+            bundleRefCounts[bundleName]--;
+            if (bundleRefCounts[bundleName] <= 0)
+            {
+                bundleRefCounts.Remove(bundleName);
+                if (loadedBundles.TryGetValue(bundleName, out var bundle))
+                {
+                    bundle.Unload(false);
+                    loadedBundles.Remove(bundleName);
+                }
+            }
+        }
+
+        // ---------- 异步加载（全平台） ----------
+
+        /// <summary> 异步加载主包和 manifest，首次调用时生效 </summary>
+        private IEnumerator LoadMainBundleAsync()
+        {
+            if (mainBundle != null) yield break;
+
+            string path = GetBundlePath();
+            string mainBundleName = Path.GetFileName(path);
+            yield return LoadBundleAsyncInternal(path, mainBundleName, bundle => mainBundle = bundle);
+
+            if (mainBundle == null) yield break;
+
+            manifest = mainBundle.LoadAsset<AssetBundleManifest>(MANIFEST_ASSET_NAME);
+            if (manifest == null)
+                Debug.LogError($"[AssetBundleMgr] 主包内未找到 {MANIFEST_ASSET_NAME} 资源");
+        }
+
+        /// <summary> 异步加载依赖包 + 目标包 </summary>
+        private IEnumerator LoadBundlesAsync(string bundleName)
+        {
+            yield return LoadMainBundleAsync();
+            if (manifest == null) yield break;
+
+            foreach (var dep in manifest.GetAllDependencies(bundleName))
+                yield return LoadBundleIfNotLoadedAsync(dep);
+
+            yield return LoadBundleIfNotLoadedAsync(bundleName);
+        }
+
+        /// <summary> 异步加载指定 AB 包，已缓存则跳过 </summary>
+        private IEnumerator LoadBundleIfNotLoadedAsync(string bundleName)
+        {
+            if (loadedBundles.ContainsKey(bundleName)) yield break;
+
+            string path = GetBundlePath(bundleName);
+            yield return LoadBundleAsyncInternal(path, bundleName,
+                bundle => loadedBundles.Add(bundleName, bundle));
+        }
+
+        /// <summary> AB 包异步加载底层实现：WebGL 走 UnityWebRequest，原生走 LoadFromFileAsync </summary>
+        private IEnumerator LoadBundleAsyncInternal(string path, string bundleName, System.Action<AssetBundle> onLoaded)
+        {
+#if UNITY_WEBGL
+            using (UnityWebRequest request = UnityWebRequestAssetBundle.GetAssetBundle(path))
+            {
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError($"[AssetBundleMgr] AB 包加载失败：{bundleName} ({path})\n{request.error}");
+                    yield break;
+                }
+
+                AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(request);
+                if (bundle != null)
+                    onLoaded?.Invoke(bundle);
+                else
+                    Debug.LogError($"[AssetBundleMgr] AB 包加载失败：{bundleName} ({path})");
+            }
+#else
+            AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(path);
+            yield return request;
+
+            if (request.assetBundle != null)
+                onLoaded?.Invoke(request.assetBundle);
+            else
+                Debug.LogError($"[AssetBundleMgr] AB 包加载失败：{bundleName} ({path})");
+#endif
+        }
+
+        // ---------- 工具方法 ----------
+
+        /// <summary> 预制体自动实例化，其他类型原样返回 </summary>
         private Object InstantiateIfGameObject(Object asset)
         {
             return asset is GameObject prefab ? Instantiate(prefab) : asset;
         }
 
-        // ==================== 公共 API：同步加载 ====================
-
-        /// <summary>
-        /// 同步加载 AB 包内的资源（泛型版本，类型由 <typeparamref name="T"/> 指定）。
-        /// </summary>
-        /// <typeparam name="T">资源类型，约束为 <see cref="Object"/>。</typeparam>
-        /// <param name="bundleName">AB 包名</param>
-        /// <param name="resourceName">包内资源名</param>
-        /// <returns>若资源是预制体则返回实例化后的对象，否则返回原资源；找不到时返回 <c>null</c>。</returns>
-        public T LoadRes<T>(string bundleName, string resourceName) where T : Object
-        {
-            return LoadRes(bundleName, resourceName, typeof(T)) as T;
-        }
-
-        /// <summary>
-        /// 同步加载 AB 包内的资源（按 <see cref="System.Type"/> 指定类型）。
-        /// </summary>
-        public Object LoadRes(string bundleName, string resourceName, System.Type type)
-        {
-            LoadDependencies(bundleName);
-            LoadBundleIfNotLoaded(bundleName);
-
-            if (!_loadedBundles.TryGetValue(bundleName, out var bundle)) return null;
-
-            Object asset = bundle.LoadAsset(resourceName, type);
-            return InstantiateIfGameObject(asset);
-        }
-
-        /// <summary>
-        /// 同步加载 AB 包内的资源（按名称，返回 <see cref="Object"/>）。
-        /// </summary>
-        public Object LoadRes(string bundleName, string resourceName)
-        {
-            return LoadRes(bundleName, resourceName, typeof(Object));
-        }
-
         // ==================== 公共 API：异步加载 ====================
 
         /// <summary>
-        /// 异步加载 AB 包内的资源（泛型版本，类型由 <typeparamref name="T"/> 指定）。
+        /// 异步加载资源。加载完成后回调，失败时回调参数为 null。
         /// </summary>
-        /// <remarks>
-        /// 加载完成后会通过 <paramref name="callback"/> 回调。
-        /// 若加载失败（包/资源不存在），回调收到的对象为 <c>null</c>。
-        /// </remarks>
         public void LoadResAsync<T>(string bundleName, string resourceName, UnityAction<T> callback) where T : Object
         {
             StartCoroutine(LoadResAsyncCoroutine(bundleName, resourceName, typeof(T),
                 asset => callback?.Invoke(asset as T)));
         }
 
-        /// <summary>
-        /// 异步加载 AB 包内的资源（按 <see cref="System.Type"/> 指定类型）。
-        /// </summary>
-        public void LoadResAsync(string bundleName, string resourceName, System.Type type, UnityAction<Object> callback)
-        {
-            StartCoroutine(LoadResAsyncCoroutine(bundleName, resourceName, type, callback));
-        }
-
-        /// <summary>
-        /// 异步加载 AB 包内的资源（按名称）。
-        /// </summary>
-        public void LoadResAsync(string bundleName, string resourceName, UnityAction<Object> callback)
-        {
-            StartCoroutine(LoadResAsyncCoroutine(bundleName, resourceName, typeof(Object), callback));
-        }
-
-        /// <summary>
-        /// 异步加载的协程实现（公共内部）。三个公共 Async 重载最终都走这里。
-        /// </summary>
+        /// <summary> 异步加载协程：加载依赖包 → 加载目标包 → 增加引用计数 → 加载资源 → 回调 </summary>
         private IEnumerator LoadResAsyncCoroutine(string bundleName, string resourceName, System.Type type, UnityAction<Object> callback)
         {
-            LoadDependencies(bundleName);
-            LoadBundleIfNotLoaded(bundleName);
+            yield return LoadBundlesAsync(bundleName);
+            AddRefCounts(bundleName);
 
-            if (!_loadedBundles.TryGetValue(bundleName, out var bundle))
+            if (!loadedBundles.TryGetValue(bundleName, out var bundle))
             {
                 callback?.Invoke(null);
                 yield break;
@@ -215,32 +209,34 @@ namespace JiangJian
             AssetBundleRequest request = bundle.LoadAssetAsync(resourceName, type);
             yield return request;
 
+            if (request.asset == null)
+                Debug.LogError($"[AssetBundleMgr] 资源未找到：{bundleName}/{resourceName}");
+
             callback?.Invoke(InstantiateIfGameObject(request.asset));
         }
 
         // ==================== 公共 API：卸载 ====================
 
-        /// <summary>
-        /// 卸载指定的 AB 包（不会销毁已加载的资产实例，遵循 <see cref="AssetBundle.Unload(bool)"/> 语义）。
-        /// </summary>
+        /// <summary> 按引用计数卸载，归零时才真正释放。不销毁已实例化的对象。 </summary>
         public void UnloadBundle(string bundleName)
         {
-            if (_loadedBundles.TryGetValue(bundleName, out var bundle))
-            {
-                bundle.Unload(false);
-                _loadedBundles.Remove(bundleName);
-            }
+            DecRefCounts(bundleName);
         }
 
-        /// <summary>
-        /// 清空所有已加载的 AB 包（包括主包和 manifest）。常用于场景切换或退出游戏时释放内存。
-        /// </summary>
+        /// <summary> 强制清空所有 AB 包（含主包），无视引用计数。用于场景切换或退出。 </summary>
         public void ClearBundles()
         {
-            AssetBundle.UnloadAllAssetBundles(false);
-            _loadedBundles.Clear();
-            _mainBundle = null;
-            _manifest = null;
+            foreach (var pair in loadedBundles)
+                pair.Value.Unload(false);
+            loadedBundles.Clear();
+            bundleRefCounts.Clear();
+
+            if (mainBundle != null)
+            {
+                mainBundle.Unload(false);
+                mainBundle = null;
+            }
+            manifest = null;
         }
     }
 }

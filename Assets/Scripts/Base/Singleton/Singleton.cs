@@ -9,11 +9,11 @@ namespace JiangJian
     public class Singleton<T> where T : class, new()
     {
         // Lazy<T> 自身实现线程安全，无需额外加锁
-        private static readonly Lazy<T> _lazyInstance = new Lazy<T>(() => new T());
+        private static readonly Lazy<T> lazyInstance = new Lazy<T>(() => new T());
 
         /// <summary>
         /// 获取单例实例。首次访问时创建，之后所有调用都返回同一实例。
         /// </summary>
-        public static T Instance => _lazyInstance.Value;
+        public static T Instance => lazyInstance.Value;
     }
 }

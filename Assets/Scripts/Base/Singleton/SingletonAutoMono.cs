@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace JiangJian
 {
@@ -13,7 +13,7 @@ namespace JiangJian
     public class SingletonAutoMono<T> : MonoBehaviour where T : MonoBehaviour
     {
         // 静态字段缓存单例实例。Unity 主线程访问，暂不额外加锁。
-        private static T _instance;
+        private static T instance;
 
         /// <summary>
         /// 获取单例实例。若实例尚未创建，则自动生成。
@@ -22,16 +22,16 @@ namespace JiangJian
         {
             get
             {
-                if (_instance == null)
+                if (instance == null)
                 {
                     // 1. 用子类类型名（如 "GameManager"）作为 GameObject 名，方便在 Hierarchy 中识别
                     GameObject singletonObj = new GameObject(typeof(T).ToString());
-                    // 2. 挂载目标组件并缓存到 _instance
-                    _instance = singletonObj.AddComponent<T>();
+                    // 2. 挂载目标组件并缓存到 instance
+                    instance = singletonObj.AddComponent<T>();
                     // 3. 标记为过场景不销毁，确保单例在场景切换后仍然有效
                     DontDestroyOnLoad(singletonObj);
                 }
-                return _instance;
+                return instance;
             }
         }
     }
